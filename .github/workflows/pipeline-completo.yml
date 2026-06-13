@@ -19,6 +19,7 @@ jobs:
 
     env:
       PYTHONPATH: .
+      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY || secrets.GROQCLOUD_API_KEY }}
 
     steps:
       - name: Checkout
@@ -42,12 +43,17 @@ jobs:
             --cov-fail-under=80 \
             -v
 
+      - name: Validar secret Groq
+        run: |
+          if [ -z "$GROQ_API_KEY" ]; then
+            echo "::error::Configure a secret GROQ_API_KEY ou GROQCLOUD_API_KEY em Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+
       # === ETAPA 2: DEPLOY GATE COM IA ===
       - name: Deploy Gate (Groq)
         id: deploy-gate
         run: python deploy/deploy_gate.py
-        env:
-          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
 
       # === ETAPA 3: CANARY DEPLOY ===
       - name: Canary Deploy Simulator
@@ -60,5 +66,4 @@ jobs:
         if: failure() && steps.canary.outcome == 'failure'
         run: python deploy/rollback_trigger.py
         env:
-          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
