@@ -66,4 +66,5 @@ jobs:
         if: failure() && steps.canary.outcome == 'failure'
         run: python deploy/rollback_trigger.py
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ github.token }}
