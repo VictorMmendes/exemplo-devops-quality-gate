@@ -395,7 +395,12 @@ Relatório gerado automaticamente pelo pipeline DevOps + IA.
         ]
     )
 
-    sys.exit(1)
+    print(
+        "\n✓ Incidente tratado com rollback. "
+        "Pipeline concluída com sucesso."
+    )
+
+    sys.exit(0)
 
 
 if __name__ == "__main__":

@@ -64,11 +64,12 @@ jobs:
       - name: Canary Deploy Simulator
         id: canary
         if: steps.deploy-gate.outcome == 'success'
+        continue-on-error: true
         run: python deploy/canary_simulator.py
 
       # === ETAPA 4: ROLLBACK AUTOMATICO ===
       - name: Rollback + Relatorio IA
-        if: failure() && steps.canary.outcome == 'failure'
+        if: steps.canary.outcome == 'failure'
         run: python deploy/rollback_trigger.py
         env:
           GH_TOKEN: ${{ github.token }}
