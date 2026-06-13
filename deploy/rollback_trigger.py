@@ -155,7 +155,7 @@ def abrir_issue_github(
     Cria Issue usando gh CLI.
     """
 
-    cmd = [
+    cmd_base = [
         "gh",
         "issue",
         "create",
@@ -164,6 +164,8 @@ def abrir_issue_github(
         "--body",
         corpo
     ]
+
+    cmd = cmd_base.copy()
 
     if labels:
         for label in labels:
@@ -174,12 +176,18 @@ def abrir_issue_github(
                 ]
             )
 
+    env = os.environ.copy()
+
+    if not env.get("GH_TOKEN") and env.get("GITHUB_TOKEN"):
+        env["GH_TOKEN"] = env["GITHUB_TOKEN"]
+
     try:
 
         result = subprocess.run(
             cmd,
             capture_output=True,
-            text=True
+            text=True,
+            env=env
         )
 
         if result.returncode == 0:
@@ -189,26 +197,77 @@ def abrir_issue_github(
                 f"{result.stdout.strip()}"
             )
 
-        else:
+            return
+
+        erro = (
+            result.stderr.strip()
+            or result.stdout.strip()
+            or "sem detalhe retornado pelo gh CLI"
+        )
+
+        if labels:
 
             print(
-                "\n✗ gh CLI não disponível "
-                "ou não autenticado."
+                "\n✗ Não foi possível criar issue com labels."
             )
 
-            print(
-                "\n--- ISSUE QUE SERIA CRIADA ---\n"
+            print(f"Detalhe gh: {erro}")
+            print("Tentando criar issue sem labels...")
+
+            result_sem_labels = subprocess.run(
+                cmd_base,
+                capture_output=True,
+                text=True,
+                env=env
             )
 
-            print(f"Título: {titulo}")
-            print()
-            print(corpo)
+            if result_sem_labels.returncode == 0:
+
+                print(
+                    f"✓ Issue criada sem labels: "
+                    f"{result_sem_labels.stdout.strip()}"
+                )
+
+                return
+
+            erro = (
+                result_sem_labels.stderr.strip()
+                or result_sem_labels.stdout.strip()
+                or "sem detalhe retornado pelo gh CLI"
+            )
+
+        print("\n✗ gh CLI falhou ao criar issue.")
+        print(f"Detalhe gh: {erro}")
+
+        print(
+            "\n--- ISSUE QUE SERIA CRIADA ---\n"
+        )
+
+        print(f"Título: {titulo}")
+        print()
+        print(corpo)
 
     except FileNotFoundError:
 
         print(
             "\n✗ gh CLI não encontrado."
         )
+
+        print(
+            "\n--- ISSUE QUE SERIA CRIADA ---\n"
+        )
+
+        print(f"Título: {titulo}")
+        print()
+        print(corpo)
+
+    except Exception as e:
+
+        print(
+            "\n✗ Erro inesperado ao criar issue com gh CLI."
+        )
+
+        print(f"Detalhe: {e}")
 
         print(
             "\n--- ISSUE QUE SERIA CRIADA ---\n"

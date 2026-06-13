@@ -55,6 +55,11 @@ jobs:
         id: deploy-gate
         run: python deploy/deploy_gate.py
 
+      - name: Login GitHub CLI
+        if: steps.deploy-gate.outcome == 'success'
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+
       # === ETAPA 3: CANARY DEPLOY ===
       - name: Canary Deploy Simulator
         id: canary
